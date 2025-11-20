@@ -9,6 +9,9 @@ export type ProjectDTO = {
   id: number;
   title: string;
   description: string;
+  longDescription: string;
+  implementationSteps: string[];
+  learningOutcomes: string;
   finalCode: string | null;
   tasks: ProjectTaskDTO[];
 };

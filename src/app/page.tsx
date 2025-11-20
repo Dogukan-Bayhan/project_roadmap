@@ -7,19 +7,47 @@ import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import type { RoadmapNodeDTO } from "@/types/roadmap";
 
+const parseSteps = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value as string[];
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as string[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 export default async function Home() {
   const nodes = await prisma.roadmapNode.findMany({
     orderBy: { id: "asc" },
   });
 
   const roadmapNodes: RoadmapNodeDTO[] = nodes.map(
-    ({ id, title, category, parentId, status, userCode }) => ({
+    ({
       id,
       title,
       category,
       parentId,
       status,
       userCode,
+      longDescription,
+      implementationSteps,
+      learningOutcomes,
+    }) => ({
+      id,
+      title,
+      category,
+      parentId,
+      status,
+      userCode,
+      longDescription,
+      implementationSteps: parseSteps(implementationSteps),
+      learningOutcomes,
     }),
   );
 

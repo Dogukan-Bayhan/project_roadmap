@@ -170,6 +170,35 @@ export function ProjectsBoard({ projects }: ProjectsBoardProps) {
                 </DialogDescription>
               </DialogHeader>
 
+              <ScrollArea className="max-h-[260px] rounded-3xl border border-white/5 bg-slate-950/40 p-5">
+                <div className="space-y-5 pr-4 text-sm text-slate-200">
+                  <section className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">
+                      Deep Dive
+                    </p>
+                    <p>{activeProject.longDescription}</p>
+                  </section>
+
+                  <section className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">
+                      Implementation Blueprint
+                    </p>
+                    <ul className="list-disc space-y-2 pl-5 text-slate-300">
+                      {activeProject.implementationSteps.map((step, index) => (
+                        <li key={`impl-${activeProject.id}-${index}`}>{step}</li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <section className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">
+                      Quant Value
+                    </p>
+                    <p>{activeProject.learningOutcomes}</p>
+                  </section>
+                </div>
+              </ScrollArea>
+
               <div className="grid gap-6 lg:grid-cols-2">
                 <section className="rounded-3xl border border-white/5 bg-slate-950/40 p-4">
                   <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-200">

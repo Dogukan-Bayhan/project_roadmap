@@ -1,14 +1,22 @@
 "use client";
 
+import dagre from "@dagrejs/dagre";
 import { motion } from "framer-motion";
 import type { MouseEvent } from "react";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import ReactFlow, {
   Background,
   Controls,
   Edge,
   MiniMap,
   Node,
+  Position,
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
@@ -25,6 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { RoadmapNodeDTO } from "@/types/roadmap";
@@ -32,16 +41,6 @@ import type { RoadmapNodeDTO } from "@/types/roadmap";
 type RoadmapCanvasProps = {
   nodes: RoadmapNodeDTO[];
 };
-
-const CATEGORY_ORDER: RoadmapNodeDTO["category"][] = [
-  "Memory",
-  "Semantics",
-  "Type System",
-  "Templates",
-  "Concurrency",
-  "Modern STL & Features",
-  "Optimization",
-];
 
 const STATUS_OPTIONS = ["PENDING", "IN_PROGRESS", "MASTERED"] as const;
 type StatusOption = (typeof STATUS_OPTIONS)[number];
@@ -82,13 +81,28 @@ type FlowGraph = {
   edges: Edge[];
 };
 
+const NODE_WIDTH = 280;
+const NODE_HEIGHT = 110;
+
+const dagreGraph = new dagre.graphlib.Graph();
+dagreGraph.setDefaultEdgeLabel(() => ({}));
+
 const computeFlowGraph = (nodes: RoadmapNodeDTO[]): FlowGraph => {
-  const spacingX = 260;
-  const spacingY = 140;
-  const categoryDepth = new Map<string, number>();
-  const categoryIndex = new Map(
-    CATEGORY_ORDER.map((category, index) => [category, index]),
-  );
+  dagreGraph.setGraph({
+    rankdir: "TB",
+    align: "UL",
+    nodesep: 70,
+    ranksep: 140,
+    marginx: 32,
+    marginy: 32,
+  });
+
+  nodes.forEach((node) => {
+    dagreGraph.setNode(node.id.toString(), {
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
+    });
+  });
 
 const resolveStatus = (value: string): StatusOption => {
   return STATUS_OPTIONS.includes(value as StatusOption)
@@ -96,15 +110,18 @@ const resolveStatus = (value: string): StatusOption => {
     : "PENDING";
 };
 
-const flowNodes: Node[] = nodes.map((node) => {
-    const order = categoryDepth.get(node.category) ?? 0;
-    const x =
-      (categoryIndex.get(node.category) ?? CATEGORY_ORDER.length) * spacingX;
-    const y = order * spacingY;
-    categoryDepth.set(node.category, order + 1);
+  nodes
+    .filter((node) => node.parentId)
+    .forEach((node) => {
+      dagreGraph.setEdge(node.parentId!.toString(), node.id.toString());
+    });
 
+  dagre.layout(dagreGraph);
+
+  const flowNodes: Node[] = nodes.map((node) => {
     const statusKey = resolveStatus(node.status);
     const status = STATUS_META[statusKey] ?? STATUS_META.PENDING;
+    const position = dagreGraph.node(node.id.toString());
 
     return {
       id: node.id.toString(),
@@ -113,21 +130,26 @@ const flowNodes: Node[] = nodes.map((node) => {
         category: node.category,
         status: statusKey,
       },
-      position: { x, y },
+      position: {
+        x: position.x - NODE_WIDTH / 2,
+        y: position.y - NODE_HEIGHT / 2,
+      },
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
       style: {
-        borderRadius: 24,
-        padding: 16,
+        width: NODE_WIDTH,
+        borderRadius: 30,
+        padding: 18,
         color: "#e2e8f0",
         fontSize: 14,
-        backdropFilter: "blur(12px)",
-        background: "rgba(15,23,42,0.85)",
-        border: `1px solid ${status.border}`,
-        boxShadow: `0 20px 55px rgba(8,47,73,0.35)`,
+        lineHeight: 1.35,
+        background:
+          "linear-gradient(180deg, rgba(2,6,23,0.95), rgba(15,23,42,0.95)) padding-box, linear-gradient(135deg, rgba(59,130,246,0.65), rgba(147,51,234,0.65)) border-box",
+        border: "1px solid transparent",
+        boxShadow: `0 30px 80px rgba(15,23,42,0.6), 0 0 0 1px ${status.border}`,
       },
-      sourcePosition: "right",
-      targetPosition: "left",
       className: cn(
-        "transition-all duration-300 hover:shadow-[0_25px_70px_rgba(34,211,238,0.25)]",
+        "rounded-[30px] border border-transparent font-semibold shadow-[0_10px_40px_rgba(15,118,110,0.15)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_90px_rgba(34,211,238,0.35)]",
       ),
     };
   });
@@ -141,6 +163,7 @@ const flowNodes: Node[] = nodes.map((node) => {
         source: node.parentId!.toString(),
         target: node.id.toString(),
         animated: node.status === "MASTERED",
+        type: "smoothstep",
         style: {
           stroke: status.border,
           strokeWidth: 2,
@@ -163,6 +186,11 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<StatusOption>("PENDING");
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setFlowNodes(initialGraph.nodes);
+    setFlowEdges(initialGraph.edges);
+  }, [initialGraph, setFlowEdges, setFlowNodes]);
 
   const openDrawer = useCallback(
     (nodeId: string) => {
@@ -274,7 +302,7 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
         transition={{ duration: 0.6 }}
         className="relative"
       >
-        <div className="h-[640px] overflow-hidden rounded-[40px] border border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-950 to-slate-950 shadow-[0_25px_80px_rgba(8,47,73,0.65)]">
+        <div className="h-[720px] overflow-hidden rounded-[40px] border border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-950 to-black shadow-[0_25px_80px_rgba(8,47,73,0.65)]">
           <ReactFlow
             nodes={flowNodes}
             edges={flowEdges}
@@ -282,14 +310,21 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
             onEdgesChange={onEdgesChange}
             onNodeClick={handleNodeClick}
             fitView
+            fitViewOptions={{ padding: 0.2, minZoom: 0.4 }}
             panOnScroll
             panOnDrag
+            nodesDraggable={false}
+            nodesConnectable={false}
+            elementsSelectable={false}
+            defaultEdgeOptions={{
+              type: "smoothstep",
+            }}
           >
             <Background
-              color="rgba(15,118,110,0.25)"
+              color="rgba(148,163,184,0.15)"
               gap={32}
-              size={1.5}
-              variant="cross"
+              size={1}
+              variant="dots"
             />
             <Controls className="!bg-slate-900/80 !border-white/10 !text-slate-200" />
             <MiniMap
@@ -319,9 +354,9 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="flex flex-col gap-3">
+            <DialogTitle className="flex flex-col gap-3 text-3xl text-white">
               <span>{selectedNode?.title}</span>
               {selectedNode ? (
                 <Badge variant="default" className="self-start">
@@ -329,43 +364,63 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
                 </Badge>
               ) : null}
             </DialogTitle>
-            <DialogDescription>
-              Attach your implementation notes or code experiments for this
-              concept. Everything saves locally to your SQLite db.
+            <DialogDescription className="text-left text-slate-300">
+              Every node now tells you what the concept is, how to deploy it, and
+              why it moves the needle for quant engineering. Capture your own
+              code below once you internalize the material.
             </DialogDescription>
           </DialogHeader>
 
           {selectedNode ? (
-            <div className="flex flex-col gap-6">
-              <div>
-                <Label className="text-xs uppercase tracking-[0.35em] text-slate-400">
-                  Status
-                </Label>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  {STATUS_OPTIONS.map((option) => (
-                    <Button
-                      key={option}
-                      variant={option === status ? "glass" : "outline"}
-                      size="sm"
-                      className={cn(
-                        option === status && "ring-1 ring-cyan-300/60",
-                      )}
-                      onClick={() => setStatus(option)}
-                    >
-                      {STATUS_META[option].label}
-                    </Button>
-                  ))}
+            <div className="flex flex-col gap-8">
+              <ScrollArea className="max-h-[320px] rounded-3xl border border-white/5 bg-slate-950/40 p-5 backdrop-blur-xl">
+                <div className="space-y-6">
+                  <EducationalSection
+                    title="The What"
+                    body={selectedNode.longDescription}
+                  />
+                  <EducationalSection
+                    title="The How"
+                    list={selectedNode.implementationSteps}
+                  />
+                  <EducationalSection
+                    title="Quant Value"
+                    body={selectedNode.learningOutcomes}
+                  />
                 </div>
-              </div>
+              </ScrollArea>
 
-              <div className="space-y-2">
-                <Label htmlFor="node-notes">C++ code or notes</Label>
-                <Textarea
-                  id="node-notes"
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="// Drop your snippets for this concept here"
-                />
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-3 rounded-3xl border border-white/5 bg-slate-950/40 p-4">
+                  <Label className="text-xs uppercase tracking-[0.35em] text-slate-400">
+                    Status
+                  </Label>
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    {STATUS_OPTIONS.map((option) => (
+                      <Button
+                        key={option}
+                        variant={option === status ? "glass" : "outline"}
+                        size="sm"
+                        className={cn(
+                          option === status && "ring-1 ring-cyan-300/60",
+                        )}
+                        onClick={() => setStatus(option)}
+                      >
+                        {STATUS_META[option].label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="node-notes">Implementation Journal</Label>
+                  <Textarea
+                    id="node-notes"
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder="// Paste code, links, perf stats..."
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -389,6 +444,32 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
         </DialogContent>
       </Dialog>
     </ReactFlowProvider>
+  );
+}
+
+type EducationalSectionProps = {
+  title: string;
+  body?: string;
+  list?: string[];
+};
+
+function EducationalSection({ title, body, list }: EducationalSectionProps) {
+  return (
+    <section className="space-y-3 rounded-2xl border border-white/5 bg-slate-900/40 p-4">
+      <p className="text-xs uppercase tracking-[0.35em] text-cyan-200">
+        {title}
+      </p>
+      {body ? (
+        <p className="text-sm leading-relaxed text-slate-200">{body}</p>
+      ) : null}
+      {list ? (
+        <ul className="list-disc space-y-2 pl-6 text-sm text-slate-300">
+          {list.map((entry, index) => (
+            <li key={`${title}-${index}`}>{entry}</li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }
 

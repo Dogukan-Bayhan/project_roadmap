@@ -6,6 +6,21 @@ import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import type { ProjectDTO } from "@/types/projects";
 
+const parseSteps = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value as string[];
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as string[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
     orderBy: { id: "asc" },
@@ -20,6 +35,9 @@ export default async function ProjectsPage() {
     id: project.id,
     title: project.title,
     description: project.description,
+    longDescription: project.longDescription,
+    implementationSteps: parseSteps(project.implementationSteps),
+    learningOutcomes: project.learningOutcomes,
     finalCode: project.finalCode,
     tasks: project.tasks.map((task) => ({
       id: task.id,
