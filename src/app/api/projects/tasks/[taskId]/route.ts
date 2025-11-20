@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logSubmissionActivity } from "@/lib/activity";
 import prisma from "@/lib/prisma";
 
 type Params = {
@@ -17,6 +18,8 @@ export async function PATCH(request: Request, { params }: Params) {
         isCompleted: Boolean(payload.isCompleted),
       },
     });
+
+    await logSubmissionActivity(`project-task:${params.taskId}`);
 
     return NextResponse.json(updated);
   } catch (error) {

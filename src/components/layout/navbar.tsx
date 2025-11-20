@@ -6,9 +6,14 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/", label: "Roadmap" },
   { href: "/projects", label: "Projects" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
-export function Navbar() {
+type NavbarProps = {
+  streak?: number;
+};
+
+export function Navbar({ streak = 0 }: NavbarProps) {
   return (
     <header className="sticky top-4 z-40 mx-auto flex w-[min(1200px,95vw)] items-center justify-between rounded-3xl border border-white/10 bg-slate-900/50 px-6 py-4 text-sm text-slate-100 shadow-[0_20px_60px_rgba(8,47,73,0.45)] backdrop-blur-3xl">
       <Link
@@ -41,6 +46,9 @@ export function Navbar() {
       </nav>
 
       <div className="flex items-center gap-3">
+        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-amber-200">
+          🔥 {streak} Day Streak
+        </span>
         <Button variant="glass" size="sm" asChild>
           <Link href="/projects">Quant Portfolio</Link>
         </Button>

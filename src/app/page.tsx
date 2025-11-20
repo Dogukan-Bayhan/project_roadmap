@@ -78,8 +78,8 @@ export default async function Home() {
                   Explore Quant Projects <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" className="text-slate-200">
-                Download Progress Snapshot
+              <Button variant="outline" size="lg" className="text-slate-200" asChild>
+                <Link href="/dashboard">Open Gap Analysis</Link>
               </Button>
             </div>
           </div>

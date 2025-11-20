@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
+import { getCurrentStreak, logVisitForToday } from "@/lib/activity";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,11 +20,14 @@ export const metadata: Metadata = {
     "Interactive C++ mastery tracker and quant portfolio for high-end engineers.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await logVisitForToday();
+  const streak = await getCurrentStreak();
+
   return (
     <html lang="en" className="dark">
       <body
@@ -33,7 +37,7 @@ export default function RootLayout({
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.25),_transparent_55%)]" />
           <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_bottom,_rgba(147,51,234,0.2),_transparent_60%)]" />
           <div className="pb-16">
-            <Navbar />
+            <Navbar streak={streak} />
             <main className="mx-auto mt-10 w-[min(1200px,95vw)] space-y-12">
               {children}
             </main>

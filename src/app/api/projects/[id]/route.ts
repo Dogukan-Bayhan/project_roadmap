@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logSubmissionActivity } from "@/lib/activity";
 import prisma from "@/lib/prisma";
 
 type Params = {
@@ -17,6 +18,8 @@ export async function PUT(request: Request, { params }: Params) {
         finalCode: typeof finalCode === "string" ? finalCode : null,
       },
     });
+
+    await logSubmissionActivity(`project:${params.id}`);
 
     return NextResponse.json(updated);
   } catch (error) {

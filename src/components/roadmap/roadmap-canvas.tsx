@@ -373,8 +373,8 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
 
           {selectedNode ? (
             <div className="flex flex-col gap-8">
-              <ScrollArea className="max-h-[320px] rounded-3xl border border-white/5 bg-slate-950/40 p-5 backdrop-blur-xl">
-                <div className="space-y-6">
+              <ScrollArea className="h-[calc(100vh-260px)] rounded-3xl border border-white/5 bg-slate-950/40 p-5 backdrop-blur-xl">
+                <div className="space-y-6 pr-2">
                   <EducationalSection
                     title="The What"
                     body={selectedNode.longDescription}

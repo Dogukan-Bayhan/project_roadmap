@@ -665,17 +665,18 @@ const PROJECT_SEED: ProjectSeed[] = [
   {
     title: "Order Book Matching Engine",
     description:
-      "Implement a low-latency limit/market matching engine that enforces strict price-time priority and supports depth snapshots.",
+      "Design a production-like matcher with strict price-time priority, telemetry, and replayable audit trails.",
     longDescription:
-      "A production-grade matching engine maintains separate bid/ask ladders, sequences events, and deterministically updates state so trades can be audited. Designing it forces you to think about memory patterns, contention, and how to surface telemetry without stalling order flow.",
+      "Overview: implement dual bid/ask ladders, sequencing logic, and deterministic snapshot emission so every state transition is auditable. The build emphasizes cache locality, NUMA awareness, and observability hooks.",
     implementationSteps: [
-      "Model price levels as cache-friendly queues with explicit sequencing metadata.",
-      "Implement matching logic that handles market, limit, IOC, and cancel/replace workflows under price-time guarantees.",
-      "Stream snapshots and trade events to downstream risk systems without blocking the hot path.",
-      "Instrument the engine with high-resolution timestamps so you can prove deterministic latency.",
+      "Lay out depth levels as contiguous price buckets with lock-free FIFO queues.",
+      "Implement order ingestion, amend, cancel, and IOC/market-paths with sequence numbers.",
+      "Add deterministic matching and self-trade prevention toggles.",
+      "Publish depth snapshots or incremental updates without blocking the hot path.",
+      "Record microsecond timestamps for every transition to feed latency dashboards.",
     ],
     learningOutcomes:
-      "Owning a matching engine teaches you how exchanges actually prioritize flow, making you better at reasoning about venue microstructure and latency-sensitive routing.",
+      "Real-World Quant Application: Citadel Securities and Nasdaq teams rely on deterministic matchers to reproduce trades under regulatory scrutiny while keeping tail latency sub-100µs.",
     tasks: [
       "Model level-2 order book structures with price buckets and FIFO queues.",
       "Implement order submission, cancellation, and amend flows with sequencing.",
@@ -687,17 +688,18 @@ const PROJECT_SEED: ProjectSeed[] = [
   {
     title: "Market Data Feed Handler",
     description:
-      "Build a resilient PCAP/UDP parser that normalizes exchange-specific packets into a unified feed for downstream systems.",
+      "Normalize multicast UDP packets from multiple exchanges into a single schema with replay controls.",
     longDescription:
-      "A feed handler ingests raw multicast packets, reorders them, applies gap detection, and converts dozens of exchange-specific encodings into a single internal schema. Getting it right means understanding networking, binary layouts, and observability.",
+      "Overview: craft PCAP ingestion, packet sequencing, loss detection, and normalization layers so downstream strategy code receives a clean, deduplicated event stream.",
     implementationSteps: [
-      "Capture traffic from PCAP or live multicast sockets and timestamp it as early as possible.",
-      "Implement binary decoders for each venue, including sequence management and drop detection.",
-      "Normalize decoded data into tightly packed structs and publish them through lock-free queues.",
-      "Add replay controls and metrics so you can backfill or investigate anomalies quickly.",
+      "Capture and timestamp traffic as close to the NIC as possible (AF_XDP/DPDK or WinPcap).",
+      "Implement binary decoders per venue, handling sequence gaps, drops, and conflation records.",
+      "Normalize messages into tightly packed structs and publish via lock-free rings.",
+      "Expose replay controls for gap fills and on-demand historical replays.",
+      "Instrument each pipeline stage with counters and latency histograms.",
     ],
     learningOutcomes:
-      "Every quant stack stands on the reliability of its feed handlers; mastering them means you can diagnose latency or drop issues before they hit PnL.",
+      "Real-World Quant Application: Exchanges like CME and Eurex expect firms to ingest multi-megabit feeds flawlessly—reliable handlers stop PnL bleed from stale or missing ticks.",
     tasks: [
       "Parse raw PCAP capture files into timestamped UDP payloads.",
       "Decode exchange wire formats and normalize to an internal schema.",
@@ -709,17 +711,18 @@ const PROJECT_SEED: ProjectSeed[] = [
   {
     title: "Backtesting Engine",
     description:
-      "Create an event-driven simulation harness that replays historical ticks into strategy logic with deterministic timing.",
+      "Replay nano-timestamped events through strategies with deterministic timing and portfolio accounting.",
     longDescription:
-      "A serious backtester replays nanosecond timestamped events, injects simulated latency, and applies transaction costs so research results correlate with production. Building one demands a clean separation between data ingestion, scheduling, and accounting.",
+      "Overview: architect a scheduler-driven simulator that replays trades/quotes, injects simulated latency, and produces verifiable PnL so research mirrors production behavior.",
     implementationSteps: [
-      "Design a deterministic event queue that advances simulated time and keeps causality intact.",
-      "Create adapters that read historical trades/quotes and feed them into the scheduler in timestamp order.",
-      "Implement a portfolio/risk ledger that tracks cash, inventory, fees, and slippage.",
-      "Expose hooks so multiple strategies can subscribe to the same timeline without interfering with each other.",
+      "Design an event bus that advances simulated time deterministically, even under multi-stream data.",
+      "Create adapters for historical trades, quotes, and depth snapshots with alignment logic.",
+      "Implement a portfolio ledger covering inventory, borrow, fees, and slippage.",
+      "Add hooks for multiple strategies to subscribe to the same timeline with isolation.",
+      "Output analytics for drawdown, factor exposure, and latency budgets.",
     ],
     learningOutcomes:
-      "When you can reproduce production behavior offline, you debug faster and trust your signals, leading directly to tighter iteration loops for new alpha.",
+      "Real-World Quant Application: Hedge funds such as Two Sigma only ship code that reproduces production fills offline—robust backtesters slash false positives.",
     tasks: [
       "Design the event bus and scheduling primitives for deterministic playback.",
       "Implement adapters for historical trades/quotes and align timestamps.",
@@ -731,17 +734,18 @@ const PROJECT_SEED: ProjectSeed[] = [
   {
     title: "High-Frequency Trading Strategy",
     description:
-      "Prototype a latency-aware SMA crossover strategy with microburst handling and safeguards for stale data.",
+      "Ship a latency-aware momentum or SMA crossover loop with stale-data guards and profiling hooks.",
     longDescription:
-      "Turning a toy SMA idea into a low-latency strategy forces you to grapple with signal freshness, clock synchronization, and protective controls. The goal is to express a complete lifecycle: ingest data, make decisions, fire orders, and monitor health.",
+      "Overview: turn a simple signal into a deployable HFT component complete with rolling indicators, throttling, and risk gates.",
     implementationSteps: [
-      "Implement rolling-window indicators that update in O(1) with every tick.",
-      "Thread safety-proof your signal path so decisions remain deterministic even when multiple feeds update simultaneously.",
-      "Add guardrails for stale quotes, widened spreads, and circuit breakers.",
-      "Integrate minimalist analytics that record turnaround times and fill quality.",
+      "Implement O(1) rolling statistics with SIMD-friendly buffers.",
+      "Integrate market data timestamps to discard stale or out-of-order ticks.",
+      "Add guardrails for widened spreads, circuit breakers, and drop detection.",
+      "Profile the full signal-to-order latency path and remove hotspots.",
+      "Record fills, rejects, and micro-metrics for post-trade analytics.",
     ],
     learningOutcomes:
-      "Nothing builds intuition for latency budgets like running your own micro-strategy and seeing how market microstructure punishes sloppy engineering.",
+      "Real-World Quant Application: Firms like Jump Trading use lightweight HFT ‘widgets’ like this to probe venues and capture micro-alpha without tipping risk budgets.",
     tasks: [
       "Implement rolling SMA calculations optimized for cache locality.",
       "Add signal gating for spread/latency constraints.",
@@ -753,23 +757,93 @@ const PROJECT_SEED: ProjectSeed[] = [
   {
     title: "Option Pricing Library",
     description:
-      "Develop a Monte Carlo and closed-form Black-Scholes pricing toolkit with reusable RNG abstractions.",
+      "Blend closed-form Greeks with Monte Carlo engines to price complex structures and calibrate vols.",
     longDescription:
-      "An options library lets you mix analytic and simulation pricers, calibrate them to surfaces, and benchmark them side-by-side. You discover how numerical stability, variance reduction, and SIMD-friendly payoffs all matter when quoting complex structures.",
+      "Overview: expose both analytic Black-Scholes pricers and Monte Carlo payoffs behind reusable RNG and payoff abstractions.",
     implementationSteps: [
-      "Implement analytic Black-Scholes/Merton formulas and verify them against canonical test cases.",
-      "Build Monte Carlo engines with Sobol or Halton sequences plus variance reduction techniques.",
-      "Design reusable random number generators and payoff functors that can run on CPU or GPU.",
-      "Provide calibration utilities for implied volatility surfaces and benchmarking harnesses.",
+      "Implement closed-form Black-Scholes, Merton, and greeks with robust unit tests.",
+      "Build Monte Carlo engines that support Sobol/Halton sequences and variance reduction tricks.",
+      "Design payoff functors that can target CPU or GPU backends.",
+      "Add volatility surface calibration utilities with visualization hooks.",
+      "Benchmark analytic vs. Monte Carlo results and expose drift metrics.",
     ],
     learningOutcomes:
-      "Owning pricing primitives helps you evaluate vendor libraries, reason about model risk, and customize payoffs for traders without waiting on third parties.",
+      "Real-World Quant Application: Banks like Goldman Sachs rely on internal pricing libraries to validate vendor quotes and stress exotic portfolios intraday.",
     tasks: [
       "Implement analytic Black-Scholes pricers for calls/puts/greeks.",
       "Create variance-reduced Monte Carlo engines with Sobol sequences.",
       "Add calibration utilities for implied volatility surfaces.",
       "Vectorize payoff accumulation using SIMD-friendly layouts.",
       "Document benchmarks comparing analytic vs. simulation results.",
+    ],
+  },
+  {
+    title: "Cross-Venue Arbitrage Bot",
+    description:
+      "Automate detection of price dislocations between venues and fire synchronized orders under strict latency budgets.",
+    longDescription:
+      "Overview: build a stat-arb or latency-arb bot that monitors multiple venues, computes edge nets of fees, and routes child orders with kill switches.",
+    implementationSteps: [
+      "Stream normalized quotes from at least two venues with synchronized timestamps.",
+      "Compute edge after venue fees, latency costs, and inventory constraints.",
+      "Implement order routing that slices orders across venues and cancels instantly if edge decays.",
+      "Add real-time PnL attribution per venue to confirm fills beat theoretical edge.",
+      "Wire safety nets for throttling, fat-finger limits, and exchange halts.",
+    ],
+    learningOutcomes:
+      "Real-World Quant Application: HFT shops like DRW use cross-venue arb bots to enforce price parity between CME futures and ETF proxies within microseconds.",
+    tasks: [
+      "Normalize two or more venue feeds into a shared book representation.",
+      "Calculate edge after fees and latency buffers.",
+      "Implement dual-order routing with synchronized cancels.",
+      "Record fills and edge decay metrics for post-trade reviews.",
+      "Trigger circuit breakers when edge turns negative three ticks in a row.",
+    ],
+  },
+  {
+    title: "Monte Carlo Scenario Simulator",
+    description:
+      "Produce risk scenarios across thousands of correlated paths with pluggable factor models and GPU acceleration.",
+    longDescription:
+      "Overview: architect a scenario generator that feeds shocks into strategies, producing VaR-style distributions and stress narratives.",
+    implementationSteps: [
+      "Model correlated Brownian motions or jump-diffusion factors with Cholesky or PCA loading.",
+      "Implement fast RNG pipelines (Philox, XORWOW, Sobol) with batching for CPU/GPU.",
+      "Allow pluggable payoff/strategy callbacks that consume simulated paths.",
+      "Aggregate risk metrics (VaR, CVaR, tail scenarios) with visualization-ready JSON.",
+      "Persist seeds and configuration for deterministic reruns during audits.",
+    ],
+    learningOutcomes:
+      "Real-World Quant Application: Risk desks at BlackRock run Monte Carlo engines nightly to quantify cross-portfolio stress under liquidity crunches.",
+    tasks: [
+      "Implement correlated path generation with configurable covariance.",
+      "Add plug-in callbacks for pricing/strategy evaluation per path.",
+      "Compute VaR/CVaR and percentile stats across simulations.",
+      "Persist seeds/config to rerun exact stress scenarios.",
+      "Visualize tail scenarios for reporting.",
+    ],
+  },
+  {
+    title: "Execution Cost Analyzer",
+    description:
+      "Analyze venue-level routing costs, queue positions, and slippage to recommend smarter execution slices.",
+    longDescription:
+      "Overview: build analytics that ingest fills, queue estimates, and microstructure stats to surface where orders should be routed next.",
+    implementationSteps: [
+      "Collect detailed fill logs including venue, queue depth, spread, and realized slippage.",
+      "Estimate queue position decay using exchange-provided order IDs or synthetic models.",
+      "Compute cost curves for participation rates versus realized spread capture.",
+      "Generate venue recommendations with confidence scores and explainability notes.",
+      "Render interactive dashboards to compare strategy variants.",
+    ],
+    learningOutcomes:
+      "Real-World Quant Application: Execution teams at Kraken or Virtu rely on cost analyzers to tune smart-order routers and minimize venue fees.",
+    tasks: [
+      "Ingest historical fill logs and enrich with market context.",
+      "Estimate queue position or time-to-fill metrics per venue.",
+      "Compute realized spread capture by order type and participation rate.",
+      "Rank venues with recommendations based on recent performance.",
+      "Export a daily report for traders with actionable guidance.",
     ],
   },
 ];

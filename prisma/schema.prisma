@@ -40,6 +40,17 @@ model Project {
   tasks              ProjectTask[]
 }
 
+model UserActivity {
+  id           Int      @id @default(autoincrement())
+  type         String
+  activityDate DateTime
+  metadata     String?
+  createdAt    DateTime @default(now())
+
+  @@index([activityDate])
+  @@index([type])
+}
+
 model ProjectTask {
   id          Int      @id @default(autoincrement())
   description String
