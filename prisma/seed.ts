@@ -658,6 +658,7 @@ type ProjectSeed = {
   longDescription: string;
   implementationSteps: string[];
   learningOutcomes: string;
+  techStack: string[];
   tasks: string[];
 };
 
@@ -677,6 +678,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: Citadel Securities and Nasdaq teams rely on deterministic matchers to reproduce trades under regulatory scrutiny while keeping tail latency sub-100µs.",
+    techStack: ["C++20", "Lock-Free", "NUMA"],
     tasks: [
       "Model level-2 order book structures with price buckets and FIFO queues.",
       "Implement order submission, cancellation, and amend flows with sequencing.",
@@ -700,6 +702,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: Exchanges like CME and Eurex expect firms to ingest multi-megabit feeds flawlessly—reliable handlers stop PnL bleed from stale or missing ticks.",
+    techStack: ["Networking", "UDP", "Lock-Free"],
     tasks: [
       "Parse raw PCAP capture files into timestamped UDP payloads.",
       "Decode exchange wire formats and normalize to an internal schema.",
@@ -723,6 +726,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: Hedge funds such as Two Sigma only ship code that reproduces production fills offline—robust backtesters slash false positives.",
+    techStack: ["Simulation", "Event-Driven", "C++20"],
     tasks: [
       "Design the event bus and scheduling primitives for deterministic playback.",
       "Implement adapters for historical trades/quotes and align timestamps.",
@@ -746,6 +750,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: Firms like Jump Trading use lightweight HFT ‘widgets’ like this to probe venues and capture micro-alpha without tipping risk budgets.",
+    techStack: ["Low Latency", "SIMD", "Telemetry"],
     tasks: [
       "Implement rolling SMA calculations optimized for cache locality.",
       "Add signal gating for spread/latency constraints.",
@@ -769,6 +774,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: Banks like Goldman Sachs rely on internal pricing libraries to validate vendor quotes and stress exotic portfolios intraday.",
+    techStack: ["Monte Carlo", "SIMD", "C++20"],
     tasks: [
       "Implement analytic Black-Scholes pricers for calls/puts/greeks.",
       "Create variance-reduced Monte Carlo engines with Sobol sequences.",
@@ -792,6 +798,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: HFT shops like DRW use cross-venue arb bots to enforce price parity between CME futures and ETF proxies within microseconds.",
+    techStack: ["Networking", "Risk", "Multithreading"],
     tasks: [
       "Normalize two or more venue feeds into a shared book representation.",
       "Calculate edge after fees and latency buffers.",
@@ -815,6 +822,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: Risk desks at BlackRock run Monte Carlo engines nightly to quantify cross-portfolio stress under liquidity crunches.",
+    techStack: ["GPU", "Monte Carlo", "Risk"],
     tasks: [
       "Implement correlated path generation with configurable covariance.",
       "Add plug-in callbacks for pricing/strategy evaluation per path.",
@@ -838,6 +846,7 @@ const PROJECT_SEED: ProjectSeed[] = [
     ],
     learningOutcomes:
       "Real-World Quant Application: Execution teams at Kraken or Virtu rely on cost analyzers to tune smart-order routers and minimize venue fees.",
+    techStack: ["Analytics", "Routing", "C++20"],
     tasks: [
       "Ingest historical fill logs and enrich with market context.",
       "Estimate queue position or time-to-fill metrics per venue.",
@@ -877,6 +886,7 @@ async function seedProjects() {
         longDescription: project.longDescription,
         implementationSteps: JSON.stringify(project.implementationSteps),
         learningOutcomes: project.learningOutcomes,
+        techStack: JSON.stringify(project.techStack),
         tasks: {
           create: project.tasks.map((description) => ({ description })),
         },

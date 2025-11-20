@@ -29,7 +29,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -354,91 +353,90 @@ export function RoadmapCanvas({ nodes }: RoadmapCanvasProps) {
           }
         }}
       >
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex flex-col gap-3 text-3xl text-white">
-              <span>{selectedNode?.title}</span>
-              {selectedNode ? (
-                <Badge variant="default" className="self-start">
-                  {selectedNode.category}
-                </Badge>
-              ) : null}
-            </DialogTitle>
-            <DialogDescription className="text-left text-slate-300">
-              Every node now tells you what the concept is, how to deploy it, and
-              why it moves the needle for quant engineering. Capture your own
-              code below once you internalize the material.
-            </DialogDescription>
-          </DialogHeader>
-
+        <DialogContent className="max-h-[92vh] max-w-4xl overflow-hidden border border-white/10 p-0">
           {selectedNode ? (
-            <div className="flex flex-col gap-8">
-              <ScrollArea className="h-[calc(100vh-260px)] rounded-3xl border border-white/5 bg-slate-950/40 p-5 backdrop-blur-xl">
-                <div className="space-y-6 pr-2">
-                  <EducationalSection
-                    title="The What"
-                    body={selectedNode.longDescription}
-                  />
-                  <EducationalSection
-                    title="The How"
-                    list={selectedNode.implementationSteps}
-                  />
-                  <EducationalSection
-                    title="Quant Value"
-                    body={selectedNode.learningOutcomes}
-                  />
-                </div>
-              </ScrollArea>
+            <div className="flex h-full flex-col">
+              <div className="border-b border-white/5 px-6 py-6">
+                <DialogTitle className="flex flex-col gap-3 text-3xl text-white">
+                  <span>{selectedNode.title}</span>
+                  <Badge variant="default" className="self-start">
+                    {selectedNode.category}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription className="mt-3 text-left text-slate-300">
+                  Every node now tells you what the concept is, how to deploy it, and
+                  why it moves the needle for quant engineering. Capture your own
+                  code below once you internalize the material.
+                </DialogDescription>
+              </div>
+              <ScrollArea className="flex-1 px-6 pr-4 pt-6">
+                <div className="space-y-8 pb-20">
+                  <div className="space-y-6 rounded-3xl border border-white/5 bg-slate-950/40 p-5 backdrop-blur-xl">
+                    <EducationalSection
+                      title="The What"
+                      body={selectedNode.longDescription}
+                    />
+                    <EducationalSection
+                      title="The How"
+                      list={selectedNode.implementationSteps}
+                    />
+                    <EducationalSection
+                      title="Quant Value"
+                      body={selectedNode.learningOutcomes}
+                    />
+                  </div>
 
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div className="space-y-3 rounded-3xl border border-white/5 bg-slate-950/40 p-4">
-                  <Label className="text-xs uppercase tracking-[0.35em] text-slate-400">
-                    Status
-                  </Label>
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    {STATUS_OPTIONS.map((option) => (
-                      <Button
-                        key={option}
-                        variant={option === status ? "glass" : "outline"}
-                        size="sm"
-                        className={cn(
-                          option === status && "ring-1 ring-cyan-300/60",
-                        )}
-                        onClick={() => setStatus(option)}
-                      >
-                        {STATUS_META[option].label}
-                      </Button>
-                    ))}
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <div className="space-y-3 rounded-3xl border border-white/5 bg-slate-950/40 p-4">
+                      <Label className="text-xs uppercase tracking-[0.35em] text-slate-400">
+                        Status
+                      </Label>
+                      <div className="mt-2 flex flex-wrap gap-3">
+                        {STATUS_OPTIONS.map((option) => (
+                          <Button
+                            key={option}
+                            variant={option === status ? "glass" : "outline"}
+                            size="sm"
+                            className={cn(
+                              option === status && "ring-1 ring-cyan-300/60",
+                            )}
+                            onClick={() => setStatus(option)}
+                          >
+                            {STATUS_META[option].label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="node-notes">Implementation Journal</Label>
+                      <Textarea
+                        id="node-notes"
+                        value={notes}
+                        onChange={(event) => setNotes(event.target.value)}
+                        placeholder="// Paste code, links, perf stats..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 pb-4">
+                    <Button
+                      onClick={saveProgress}
+                      disabled={isPending}
+                      className="flex-1"
+                    >
+                      {isPending ? "Saving..." : "Save Progress"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={resetProgress}
+                      disabled={isPending}
+                    >
+                      Reset
+                    </Button>
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="node-notes">Implementation Journal</Label>
-                  <Textarea
-                    id="node-notes"
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    placeholder="// Paste code, links, perf stats..."
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={saveProgress}
-                  disabled={isPending}
-                  className="flex-1"
-                >
-                  {isPending ? "Saving..." : "Save Progress"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={resetProgress}
-                  disabled={isPending}
-                >
-                  Reset
-                </Button>
-              </div>
+              </ScrollArea>
             </div>
           ) : null}
         </DialogContent>

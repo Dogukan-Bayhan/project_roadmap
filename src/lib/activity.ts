@@ -3,8 +3,7 @@ import prisma from "@/lib/prisma";
 const MS_IN_DAY = 86_400_000;
 
 const ACTIVITY_TYPES = {
-  VISIT: "visit",
-  SUBMISSION: "submission",
+  MEANINGFUL: "meaningful",
 } as const;
 
 const startOfUTC = (date: Date) =>
@@ -22,30 +21,27 @@ const parseDayKey = (key: string) => {
   return new Date(Date.UTC(year, month - 1, day));
 };
 
-export async function logVisitForToday() {
+export async function logMeaningfulActivity(metadata?: string) {
   const todayStart = startOfUTC(new Date());
-
   const existing = await prisma.userActivity.findFirst({
     where: {
-      type: ACTIVITY_TYPES.VISIT,
       activityDate: { gte: todayStart },
     },
   });
 
-  if (!existing) {
-    await prisma.userActivity.create({
-      data: {
-        type: ACTIVITY_TYPES.VISIT,
-        activityDate: new Date(),
-      },
-    });
+  if (existing) {
+    if (metadata && !existing.metadata) {
+      await prisma.userActivity.update({
+        where: { id: existing.id },
+        data: { metadata },
+      });
+    }
+    return;
   }
-}
 
-export async function logSubmissionActivity(metadata?: string) {
   await prisma.userActivity.create({
     data: {
-      type: ACTIVITY_TYPES.SUBMISSION,
+      type: ACTIVITY_TYPES.MEANINGFUL,
       activityDate: new Date(),
       metadata,
     },

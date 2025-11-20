@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
-import { getCurrentStreak, logVisitForToday } from "@/lib/activity";
+import { getCurrentStreak } from "@/lib/activity";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +25,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await logVisitForToday();
   const streak = await getCurrentStreak();
 
   return (

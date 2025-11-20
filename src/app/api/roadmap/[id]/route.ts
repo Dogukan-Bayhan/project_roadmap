@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { logSubmissionActivity } from "@/lib/activity";
+import { logMeaningfulActivity } from "@/lib/activity";
 import prisma from "@/lib/prisma";
 
 const ALLOWED_STATUSES = ["PENDING", "IN_PROGRESS", "MASTERED"] as const;
@@ -30,7 +30,7 @@ export async function PUT(request: Request, { params }: Params) {
       },
     });
 
-    await logSubmissionActivity(`roadmap:${params.id}`);
+    await logMeaningfulActivity(`roadmap:${params.id}`);
 
     return NextResponse.json(updated);
   } catch (error) {

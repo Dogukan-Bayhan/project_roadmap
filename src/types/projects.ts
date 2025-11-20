@@ -12,6 +12,7 @@ export type ProjectDTO = {
   longDescription: string;
   implementationSteps: string[];
   learningOutcomes: string;
+  techStack: string[];
   finalCode: string | null;
   tasks: ProjectTaskDTO[];
 };

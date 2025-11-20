@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 import type { ProjectDTO } from "@/types/projects";
 
-const parseSteps = (value: unknown): string[] => {
+const parseList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     return value as string[];
   }
@@ -36,8 +36,9 @@ export default async function ProjectsPage() {
     title: project.title,
     description: project.description,
     longDescription: project.longDescription,
-    implementationSteps: parseSteps(project.implementationSteps),
+    implementationSteps: parseList(project.implementationSteps),
     learningOutcomes: project.learningOutcomes,
+    techStack: parseList(project.techStack),
     finalCode: project.finalCode,
     tasks: project.tasks.map((task) => ({
       id: task.id,
